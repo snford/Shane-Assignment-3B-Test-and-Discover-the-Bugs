@@ -6,59 +6,41 @@ import java.time.temporal.ChronoUnit;
 
 public class Session
 {
-	// Attributes
-	private LocalDateTime checkIn;
-	private LocalDateTime checkOut;
-	
-	// Constructor
+    // Attributes
+    private LocalDateTime checkIn;
+    private LocalDateTime checkOut;
+
+    // Constructor
     public Session(LocalDateTime checkIn, LocalDateTime checkOut) {
-    	if(!verifySession(checkIn, checkOut)) {
-    		throw new IllegalArgumentException("Invalid times");
-    	}
+        if (!verifySession(checkIn, checkOut)) {
+            throw new IllegalArgumentException("Invalid session timestamps");
+        }
+        this.checkIn = checkIn;
+        this.checkOut = checkOut;
     }
-    
-    /**
-     * Verify a session is valid
-     * @param t1 start time
-     * @param t2 end time
-     * @return true if valid, else false
-     */
+
+    // Verify that session is valid
+    // (keep signature; only fixed body)
     private boolean verifySession(LocalDateTime t1, LocalDateTime t2) {
-    	// check if either is null
-    	if(t1 == null && t2 == null) return false;
-    	// check-in after or same time as check-out
-    	if(t1.isAfter(t2)) return false;
-    	// check spanning multiple days
-    	if(!t1.toLocalDate().isEqual(t2.toLocalDate())) return false;
-    	
-    	checkIn = t1;
-    	checkOut = t2;
-    	return true;
+        if (t1 == null || t2 == null) return false;
+        if (!t1.toLocalDate().equals(t2.toLocalDate())) return false;   // same calendar day
+        return t2.isAfter(t1);                                           // strictly after (reject zero/negative)
     }
-    
-    /**
-     * Get date of session
-     */
+
+    // Get date of the session
     public LocalDate getDate() {
-    	return checkOut.toLocalDate();
+        return checkIn.toLocalDate();
     }
-    
-    /** 
-     * Calculate the duration of a session
-     * @return session duration (hours) on success. Return negative on failure.
-     */
+
+    // Calculate duration in **hours** (double)
     public double calcDuration() {
-  	    long seconds = ChronoUnit.SECONDS.between(checkIn, checkOut);
-	    return seconds/60.0;
+        long minutes = ChronoUnit.MINUTES.between(checkIn, checkOut);
+        if (minutes < 0) return 0.0;   // defensive; verifySession prevents this
+        return minutes / 60.0;         // convert minutes -> hours
     }
-    
-    /**
-     * Print out the Session data
-     * @return session data
-     */
-    @Override
+
+    // Print this session's information
     public String toString() {
-    	double duration = calcDuration();
-    	return "{CheckIn: "+ checkIn+", CheckOut: " +checkOut+", Duration: "+ (duration >= 0 ? duration : "N/A")+"}";
+        return "Session on "+getDate()+" for "+String.format("%.2f", calcDuration())+" hours";
     }
 }
